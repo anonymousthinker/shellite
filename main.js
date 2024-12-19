@@ -3,13 +3,18 @@
 
 const currDirectory = ['~'];
 const files = [];
+const directories = [];
 
 const handleExternalCommand = function (command, args) {
   return 'slt: command not found: ' + command;
 };
 
+const mkdir = function (args) {
+  directories.push(args);
+};
+
 const rm = function (args) {
-  const file = args.join(' ');
+  const file = args;
   const getFile = files.find((element) => element === file);
   if (getFile === undefined) {
     const message = 'rm: ' + file + ': No such file or directory';
@@ -20,41 +25,53 @@ const rm = function (args) {
 };
 
 const touch = function (args) {
-  files.push(args.join(' '));
+  files.push(args);
 };
 
 const ls = function () {
-  console.log(files.join('    '));
+  const space = ' '.repeat(5);
+  const status = directories.join(space) + space + files.join(space);
+  return status;
 };
 
 const pwd = function () {
-  console.log(currDirectory.join('/'));
+  const status = currDirectory.join('/');
+  return status;
 };
 
 const cd = function (args) {
-  const arg = args.join(' ');
-  switch (arg) {
-    case '..':
-      currDirectory.length !== 1 ? currDirectory.pop() : currDirectory;
-      break;
-    case '.':
-      return currDirectory;
-    default:
-      currDirectory.push(arg);
+  const invalidCd = args === '..' && currDirectory.length === 1;
+  const getBackUntilHomeDir = args === '..' && currDirectory.length !== 1;
+
+  if (getBackUntilHomeDir) {
+    currDirectory.pop();
+    return;
   }
+
+  if (args === '.' || invalidCd) {
+    return;
+  }
+
+  currDirectory.push(args);
+  return;
 };
 
 const echo = function (args) {
-  return args.join(' ');
+  return args;
 };
 
 const commands = [['echo', echo], ['cd', cd],
-['pwd', pwd], ['touch', touch], ['ls', ls], ['rm', rm]];
+['pwd', pwd], ['touch', touch], ['ls', ls], ['rm', rm], ['mkdir', mkdir]];
 
 const runCommand = function (commandInput) {
   const [command, ...args] = commandInput.split(' ');
   const cmdFn = commands.find((element) => element.includes(command));
-  return cmdFn[1](args);
+
+  if (cmdFn === undefined) {
+    return 'slt: command not found: ' + command;
+  }
+
+  return cmdFn[1](args.join(' ').trim());
 };
 
 const getCommand = function () {
